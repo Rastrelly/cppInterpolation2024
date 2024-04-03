@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
 
 struct point
 {
@@ -14,53 +15,43 @@ class multiInterpolator
 {
 private:
 	pVec dataSet;
+	boost::math::interpolators::cardinal_cubic_b_spline<float> *spline;
 public:
-	point nativeFunction(float x)
-	{
-		return { x, pow(x, 2) };
-	}
+
+	//constructor
 	multiInterpolator(int l)
 	{
 		makeDataSet(l);
 	}
-	void makeDataSet(int l)
+
+	//general data management
+	point getDataPoint(int id)
 	{
-		dataSet.resize(l);
-		for (int i = 0; i < l; i++) dataSet[i] = { (float)i, nativeFunction(i).y };
+		return dataSet[id];
 	}
-	void findNearestNeighbours(point &p1, point &p2, float sx)
+	int getDataSetSize()
 	{
-		int l = dataSet.size();
-		p1 = dataSet[0];
-		p2 = dataSet[1];
-		for (int i = 0; i < l - 1; i++)
-		{
-			if ((abs(dataSet[i].x - sx)<abs(p1.x - sx)) && (sx>dataSet[i].x))
-			{
-				p1 = dataSet[i];
-				p2 = dataSet[i + 1];
-				
-				std::cout << "P1: " << p1.x << "; " << p1.y << "; ";
-				std::cout << "P2: " << p2.x << "; " << p2.y << "\n";
-			}
-		}
+		return dataSet.size();
 	}
-	point lInterp(float x)
-	{
-		point n1; point n2;
-		findNearestNeighbours(n1, n2, x);
-		float y = (((n2.y - n1.y)*(x - n1.x)) / (n2.x - n1.x)) + n1.y;
-		return { x,y };
-	}
-	void printData()
-	{
-		int i = 0;
-		for (point p : dataSet)
-		{
-			i++;
-			std::cout << i << ") ";
-			std::cout << p.x << "; " << p.y << "\n";
-		}
-	}
+	point nativeFunction(float x);	
+	void makeDataSet(int l);
+	void printData();
+
+	//linear interpolation
+	void findNearestNeighbours(point &p1, point &p2, float sx);
+	point lInterp(float x);
+	
+	//lagrange interpolation
+	float findLJ(int j, float x, pVec ds);
+	point lagrangeInterp(float x);
+
+	//newton interpolate
+    //https://gist.github.com/komasaru/6a10c02cf3f5e5fe411d7fb3987b36dd
+	point newtonInterp(float x);
+
+	//spline interp
+	void prepSpline();
+	point splineInterp(float x);
+
 };
 
